@@ -1,17 +1,112 @@
-# EV Charging Ecosystem SOC (OCPP 1.6-J) - prototype
-Run `./run_all.sh` (needs python3 + scapy, pandas, matplotlib, python-docx, tshark). ~3 min.
+# EV Charging Ecosystem SOC (OCPP 1.6-J)
 
-- `sim/` simulator: 8 chargers + CSMS, normal traffic, attacks A1 (brute force), A2 (rogue charger), A3 (flood)
-- `output/pcap/` full + per-attack pcaps (open in Wireshark) - `output/logs/csms/` JSON logs - `output/ground_truth/` labels
-- `siem/splunk/` Splunk app (index, lookup, saved searches, dashboard) and SPL query file - `siem/detect.py` engine - `siem/dashboard.py`
-- `siem/wazuh/` an equivalent Wazuh rule set, included as an alternative SIEM implementation (not the one used for this submission)
-- `output/dashboard/dashboard.html` dashboard - `output/evidence/` tshark evidence - `output/siem/` alerts + evaluation
-- `docs/EV_SOC_Report.docx` (source `docs/report.md`)
+A prototype Security Operations Center for a public EV charging site. Eight simulated chargers talk OCPP 1.6-J over WebSocket to a Charging Station Management System (CSMS). The project generates normal operation, injects three controlled attacks, captures packets and logs, and detects the attacks with Wireshark/tshark and Splunk.
 
-The assignment allows either Wazuh or Splunk; this submission uses Splunk, fully deployed and verified live (see below). The Wazuh rules in `siem/wazuh/` implement the same detection logic and are provided for reference or for a site that prefers Wazuh, but were not the path run for this submission.
+**Team**
 
-## Splunk - VERIFIED LIVE (installed at /opt/splunk, web UI http://localhost:8000)
-App `siem/splunk/ev_soc_app` is installed at `/opt/splunk/etc/apps/ev_soc` (index `ev_soc`, JSON sourcetype `ev_json`, lookup `ev_inventory`, 5 saved searches, dashboard "EV Charging SOC"). Logs were copied to `/opt/splunk_data/ev_soc/` (monitored) and confirmed ingested: `index=ev_soc | stats count by event` returns 16,559 events across ws_auth, cp_boot, cp_disconnected, ocpp_message, meter_value, service_health, id_authorize, transaction_start/stop, data_transfer, admin_login, cp_status. All 5 saved searches were executed through the Splunk REST API against this live index and each fired on the correct attack (A1 brute force, A1 RFID guessing, A2 rogue session, A2 implausible power, A3 connection flood) - see `docs/report.md` section 7 for the exact numbers returned by Splunk. Login: admin / (see team's Splunk credentials - not stored in this repo).
+| Name | Student ID | Role |
+|---|---|---|
+| Saad Bukhari | 23i-2001 | Simulation Lead |
+| M. Hassaan | 23i-2038 | Attack Generation Lead |
+| Abdul Ahad | 23i-2014 | Detection Lead |
+
+The full write-up is in [docs/EV_SOC_Report.docx](docs/EV_SOC_Report.docx).
+
+## Overview
+
+| Item | Detail |
+|---|---|
+| Protocol | OCPP 1.6-J over WebSocket (`ws://10.10.20.10:8080/ocpp/<ChargePointId>`) |
+| Assets | 8 chargers (2x AC 7.4 kW, 4x AC 22 kW, 2x DC 50 kW) and one CSMS |
+| Simulation | Two hours of traffic, deterministic (seed 1337), 97,440 packets, about 16.5k log events |
+| Attacks | A1 authentication brute force, A2 rogue charger impersonation, A3 connection flood |
+| SIEM | Splunk Enterprise (deployed and verified live); equivalent Wazuh rules included as an alternative |
+| Result | 19 alerts, all attributable to the injected attacks, 0 false positives |
+
+## Attack scenarios
+
+| ID | Scenario | Window (UTC) | Main indicators |
+|---|---|---|---|
+| A1 | WebSocket password brute force and RFID idTag guessing | 08:38 to 08:49 | Bursts of HTTP 401 from one non-charger IP, many rejected idTags, then a success |
+| A2 | Rogue CP-03 session with fraudulent transactions | 09:05 to 09:15 | Duplicate session, firmware/serial mismatch, power up to 8.4x rating, energy rollback, unknown-vendor DataTransfer |
+| A3 | Handshake and BootNotification flood | 09:38 to 09:46 | Order-of-magnitude jump in handshakes, HTTP 503, CPU and latency growth, ping-timeout disconnects |
+
+## Repository layout
+
+| Path | Contents |
+|---|---|
+| `sim/` | Simulator: topology, normal behaviour, attack scenarios, packet and log generation |
+| `output/pcap/` | Full and per-attack packet captures (open in Wireshark) |
+| `output/logs/csms/` | CSMS JSON logs (`ocpp_gateway.log`, `transactions.log`, `system.log`) |
+| `output/ground_truth/` | Attack windows and per-event labels, used only for scoring |
+| `output/evidence/` | tshark evidence per scenario |
+| `output/siem/` | Alerts and evaluation results |
+| `output/dashboard/` | Detection engine dashboard (`dashboard.html`) |
+| `siem/splunk/` | Splunk app (index, lookup, saved searches, dashboard) and `queries.spl` |
+| `siem/wazuh/` | Wazuh rule set and CDB list (alternative implementation, not used for this submission) |
+| `siem/detect.py` | Independent Python detection engine with scored evaluation |
+| `siem/dashboard.py`, `siem/replay.py` | Dashboard builder and accelerated log replay |
+| `analysis/` | Wireshark/tshark evidence script |
+| `docs/` | Report, diagrams, screenshots and report build scripts |
+| `run_all.sh` | One-command reproduction of the full pipeline |
+
+## Quick start
+
+Requirements: Python 3, `scapy`, `pandas`, `matplotlib`, `python-docx`, and `tshark`.
+
+```bash
+./run_all.sh
+```
+
+This takes about three minutes and runs, in order: simulation, detection engine, dashboard, Wireshark evidence, diagrams, and report build. Individual steps:
+
+```bash
+python3 sim/generate.py       # logs, pcaps, ground truth
+python3 siem/detect.py        # alerts and evaluation
+python3 siem/dashboard.py     # output/dashboard/dashboard.html
+bash analysis/wireshark_evidence.sh
+```
+
+Note: `run_all.sh` regenerates `docs/EV_SOC_Report.docx` from `docs/report.md` using `docs/build_report.py`, which overwrites a manually formatted copy of the report.
+
+## Wireshark analysis
+
+Open any file in `output/pcap/` in Wireshark. TCP/8080 is dissected as HTTP and then WebSocket, and OCPP-J appears as `websocket.payload.text`. Example display filters:
+
+| Purpose | Filter |
+|---|---|
+| A1 failed logins | `http.response.code==401 && ip.dst==10.10.99.66` |
+| A1 plaintext credentials | `http.authbasic && ip.src==10.10.99.66` |
+| A2 duplicate session | `http.request.uri contains "/ocpp/CP-03"` |
+| A2 absurd power | `websocket.payload.text contains "Power.Active" && ip.src==10.10.99.66` |
+| A3 SYN flood | `tcp.flags.syn==1 && tcp.flags.ack==0 && ip.src==10.10.99.66` |
+| A3 saturation | `http.response.code==503` |
+
+The complete filter table is in section 6 of the report.
+
+## Splunk deployment
+
+The Splunk app in `siem/splunk/ev_soc_app` defines index `ev_soc`, JSON field extraction, a charger inventory lookup, five saved searches and the "EV Charging SOC" dashboard.
+
+| Setting | Value |
+|---|---|
+| Install path | `/opt/splunk` (app at `/opt/splunk/etc/apps/ev_soc`) |
+| Web UI | `http://localhost:8000` |
+| Monitored data | `/opt/splunk_data/ev_soc/` |
+| Indexed events | 16,559 |
+
+All five saved searches were executed through the Splunk REST API against the live index and each fired on the correct attack. Exact results are in section 7 of the report. Splunk credentials are not stored in this repository.
+
+## Detection results
+
+| Scenario | First alert (UTC) | Time to detect | Indicator recall |
+|---|---|---|---|
+| A1 brute force | 08:38:30 | 30 s | 4/4 rules |
+| A2 rogue charger | 09:05:00 | under 1 s | 7/7 rules |
+| A3 flood | 09:38:02 | 2.4 s | 5/5 rules |
+
+The data is synthetic and the attacks are scripted, so perfect recall and zero false positives reflect a clean lab and not production performance. See section 8 of the report for limitations.
 
 ## Screenshots
-`docs/screenshots/` has 10 screenshots: 5 from the actual Wireshark GUI (applied filters, packet lists, hex dumps) and 5 from the live Splunk web UI (home page, event-count search, the full dashboard, and two attack-detection searches). They were captured with `docs/capture_screenshots.sh` (needs `SPLUNK_ADMIN_PASSWORD` set, Xvfb, and chromedriver; it runs Wireshark and a headless Chromium on a private virtual display so the real desktop is untouched) and are already embedded in `docs/EV_SOC_Report.docx`.
+
+`docs/screenshots/` holds ten screenshots: five from the Wireshark GUI and five from the live Splunk web UI. They are generated by `docs/capture_screenshots.sh`, which needs `SPLUNK_ADMIN_PASSWORD` set, Xvfb and chromedriver.
