@@ -1,0 +1,26 @@
+# ===== Splunk equivalents (index=ev_soc, sourcetype=_json, TIME_PREFIX/TIMESTAMP from "timestamp") =====
+
+# --- Baseline -------------------------------------------------------------
+index=ev_soc event=ocpp_message | timechart span=1m count by action
+index=ev_soc event=ocpp_message | stats count avg(latency_ms) p95(latency_ms) by cp_id
+
+# --- A1: authentication brute force ----------------------------------------
+index=ev_soc event=ws_auth result=failure | bin _time span=2m | stats count dc(cp_id) as targeted_ids by _time src_ip | where count>=10
+index=ev_soc event=ws_auth | sort 0 _time | streamstats window=60 current=f count(eval(result="failure")) as prior_fail by src_ip | where result="success" AND prior_fail>=10
+index=ev_soc event=id_authorize | bin _time span=2m | stats count(eval(status!="Accepted")) as rejected count(eval(status="Accepted")) as accepted by _time cp_id | where rejected>=10
+
+# --- A2: rogue charger / abnormal transactions -----------------------------
+index=ev_soc event=ws_auth result=success | lookup ev_inventory cp_id OUTPUT ip as expected_ip | where src_ip!=expected_ip
+index=ev_soc event=cp_boot | stats values(firmware) as fw values(serial) as serial dc(firmware) as n by cp_id | where n>1 OR fw!="2.4.1"
+index=ev_soc event=meter_value | eval rated_w=rated_kw*1000 | where power_w>1.2*rated_w | table _time cp_id src_ip transaction_id power_w rated_w energy_wh
+index=ev_soc event=meter_value | where delta_wh<0 | table _time cp_id transaction_id energy_wh delta_wh
+index=ev_soc event=data_transfer status=UnknownVendorId | table _time cp_id src_ip vendor_id message_id
+index=ev_soc (event=transaction_start OR event=transaction_stop) | transaction id_tag startswith="transaction_start" endswith="transaction_stop" keepevicted=true | eval chargers=mvcount(split(cp_id," ")) | where chargers>1
+index=ev_soc event=transaction_start | eval ts=_time | sort 0 id_tag ts | streamstats current=f last(cp_id) as prev_cp last(ts) as prev_ts by id_tag | where prev_cp!=cp_id AND ts-prev_ts<900
+
+# --- A3: flood / service disruption ----------------------------------------
+index=ev_soc event=ws_auth | timechart span=10s count by status_code
+index=ev_soc event=ws_auth | bin _time span=30s | stats count by _time src_ip | where count>=100
+index=ev_soc event=cp_disconnected reason=ping_timeout | timechart span=1m count by cp_id
+index=ev_soc event=service_health | timechart span=15s max(cpu_pct) max(p95_latency_ms) max(active_ws)
+index=ev_soc event=cp_boot | bin _time span=30s | stats count by _time src_ip | where count>=20

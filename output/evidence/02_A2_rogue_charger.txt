@@ -1,0 +1,36 @@
+## A2  rogue CP-03 session   filter: ip.addr==10.10.99.66 && websocket
+2026-11-04T09:05:01.000000000+0000	10.10.99.66	[2,"a1b49817-897a-4293-b305-a941d322fd22","BootNotification",{"chargePointVendor":"ChargeTech","chargePointModel":"CT-AC22","firmwareVersion":"9.9.9-dev","chargePointSerialNumber":"SPOOF-0003"}]
+2026-11-04T09:05:03.000000000+0000	10.10.99.66	[2,"8b0016ae-7118-4b6f-ac7c-99c4d06a116d","StatusNotification",{"connectorId":1,"status":"Preparing","errorCode":"NoError"}]
+2026-11-04T09:05:04.000000000+0000	10.10.99.66	[2,"4ccd1433-bd00-4649-90cb-8752328999b4","Authorize",{"idTag":"ID-A3B1799D"}]
+2026-11-04T09:05:06.000000000+0000	10.10.99.66	[2,"761ea1d1-4584-4492-a6e7-8ccbea663ea5","StartTransaction",{"connectorId":1,"idTag":"ID-A3B1799D","meterStart":0,"timestamp":"2026-11-04T09:05:06.000Z"}]
+2026-11-04T09:05:08.000000000+0000	10.10.99.66	[2,"0106a903-9e4a-4090-9888-517362405a67","StatusNotification",{"connectorId":1,"status":"Charging","errorCode":"NoError"}]
+2026-11-04T09:05:40.000000000+0000	10.10.99.66	[2,"c45ee1d4-ef75-4cdf-addb-4f9139e1f638","MeterValues",{"connectorId":1,"transactionId":100247,"meterValue":[{"timestamp":"2026-11-04T09:05:40.000Z","sampledValue":[{"measurand":"Energy.Active.Import.Register","v
+2026-11-04T09:06:10.000000000+0000	10.10.99.66	[2,"dfbb2ab2-8e2f-4fce-bf70-aeb280e769f1","MeterValues",{"connectorId":1,"transactionId":100247,"meterValue":[{"timestamp":"2026-11-04T09:06:10.000Z","sampledValue":[{"measurand":"Energy.Active.Import.Register","v
+2026-11-04T09:06:40.000000000+0000	10.10.99.66	[2,"24cc7cf1-7e41-4927-8fda-e59ed1f2999b","DataTransfer",{"vendorId":"x-diag","messageId":"shell","data":"id;uname -a"}]
+2026-11-04T09:06:40.017703000+0000	10.10.99.66	[2,"3b1cf23a-68cf-44b2-906d-f045b94875da","MeterValues",{"connectorId":1,"transactionId":100247,"meterValue":[{"timestamp":"2026-11-04T09:06:40.000Z","sampledValue":[{"measurand":"Energy.Active.Import.Register","v
+2026-11-04T09:06:44.000000000+0000	10.10.99.66	[2,"5b450a4f-b10b-4653-aa8e-0f0d88e024ff","DataTransfer",{"vendorId":"x-diag","messageId":"getconfig","data":""}]
+2026-11-04T09:07:10.000000000+0000	10.10.99.66	[2,"bbf3c16d-d5cb-40f9-99c6-414732bf80d0","MeterValues",{"connectorId":1,"transactionId":100247,"meterValue":[{"timestamp":"2026-11-04T09:07:10.000Z","sampledValue":[{"measurand":"Energy.Active.Import.Register","v
+2026-11-04T09:07:40.000000000+0000	10.10.99.66	[2,"d9701925-2eb9-4c4d-9a6d-dec02095dec6","MeterValues",{"connectorId":1,"transactionId":100247,"meterValue":[{"timestamp":"2026-11-04T09:07:40.000Z","sampledValue":[{"measurand":"Energy.Active.Import.Register","v
+
+## Duplicate session proof: CP-03 handshakes by source IP (filter: http.request.uri contains "CP-03")
+      1 10.10.10.13	CT-Firmware/2.4.1
+      6 10.10.20.10	
+      5 10.10.99.66	python-websockets/12.0
+
+## Reported power values (W) in MeterValues from rogue vs legit CP-03 (filter: websocket.payload.text contains "Power.Active")
+rogue:
+Power.Active.Import","value":"154988
+Power.Active.Import","value":"184061
+Power.Active.Import","value":"165843
+Power.Active.Import","value":"160863
+Power.Active.Import","value":"161588
+legit CP-03 (10.10.10.13):
+Power.Active.Import","value":"8249
+Power.Active.Import","value":"8376
+Power.Active.Import","value":"8119
+Power.Active.Import","value":"8007
+Power.Active.Import","value":"8152
+
+## DataTransfer probes (filter: websocket.payload.text contains "DataTransfer")
+2026-11-04T09:06:40.000000000+0000	10.10.99.66	[2,"24cc7cf1-7e41-4927-8fda-e59ed1f2999b","DataTransfer",{"vendorId":"x-diag","messageId":"shell","data":"id;uname -a"}]
+2026-11-04T09:06:44.000000000+0000	10.10.99.66	[2,"5b450a4f-b10b-4653-aa8e-0f0d88e024ff","DataTransfer",{"vendorId":"x-diag","messageId":"getconfig","data":""}]

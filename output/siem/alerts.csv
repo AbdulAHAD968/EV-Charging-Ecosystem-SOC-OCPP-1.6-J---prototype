@@ -1,0 +1,20 @@
+rule_id,rule,scenario_hint,time,entity,count,severity,detail
+100110,WebSocket credential brute force,A1,2026-11-04 08:38:30.114000+00:00,10.10.99.66,10,10,"10 failed handshakes in 2 min, 2793 charger IDs targeted"
+100111,Session from non-registered address,A1/A2,2026-11-04 08:40:51.784000+00:00,10.10.99.66,1,13,"CP-03 authenticated from 10.10.99.66 (inventory: 10.10.10.13), UA=python-websockets/12.0"
+100112,RFID idTag guessing,A1,2026-11-04 08:44:37.629000+00:00,CP-05,10,10,10 rejected idTags in 2 min at CP-05
+100113,idTag accepted after guessing burst,A1,2026-11-04 08:48:12.812000+00:00,CP-05,1,13,ID-A3B1799D accepted at CP-05 after rejected-tag burst: probable cloned card
+100111,Session from non-registered address,A1/A2,2026-11-04 09:05:00.018000+00:00,10.10.99.66,1,13,"CP-03 authenticated from 10.10.99.66 (inventory: 10.10.10.13), UA=python-websockets/12.0"
+100120,Unexpected firmware / serial,A2,2026-11-04 09:05:01.021000+00:00,10.10.99.66,1,12,"CP-03 booted with firmware 9.9.9-dev, serial SPOOF-0003"
+100125,Concurrent idTag use,A2,2026-11-04 09:05:06.009000+00:00,ID-A3B1799D,1,13,idTag ID-A3B1799D active on CP-07 and CP-03 simultaneously
+100124,meterStart = 0,A2,2026-11-04 09:05:06.009000+00:00,10.10.99.66,1,12,tx 100247 on CP-03 started with meterStart=0
+100121,Implausible power,A2,2026-11-04 09:05:40.021000+00:00,10.10.99.66,16,12,tx 100247 on CP-03 rated 22.0 kW reported up to 184 kW in 16 samples
+100123,DataTransfer probing,A2,2026-11-04 09:06:40.018000+00:00,10.10.99.66,1,9,CP-03 sent vendor=x-diag msg=shell
+100123,DataTransfer probing,A2,2026-11-04 09:06:44.020000+00:00,10.10.99.66,1,9,CP-03 sent vendor=x-diag msg=getconfig
+100122,Energy register decreased,A2,2026-11-04 09:10:40.026000+00:00,10.10.99.66,1,12,tx 100247 on CP-03: delta -4585 Wh
+100111,Session from non-registered address,A1/A2,2026-11-04 09:38:00.220000+00:00,10.10.99.66,1,13,"CP-03 authenticated from 10.10.99.66 (inventory: 10.10.10.13), UA=python-websockets/12.0"
+100135,BootNotification flood,A3,2026-11-04 09:38:02.432000+00:00,10.10.99.66,20,12,20 BootNotifications in 30 s from 10.10.99.66
+100110,WebSocket credential brute force,A1,2026-11-04 09:38:03.413000+00:00,10.10.99.66,10,10,"10 failed handshakes in 2 min, 2793 charger IDs targeted"
+100130,Connection flood,A3,2026-11-04 09:38:11.147000+00:00,10.10.99.66,100,12,100 WebSocket handshakes in 30 s from 10.10.99.66
+100133,CSMS resource exhaustion,A3,2026-11-04 09:38:59.990000+00:00,csms-01,1,10,cpu=99.0% p95=527.0 ms active_ws=667
+100131,CSMS returning 503,A3,2026-11-04 09:39:00.623000+00:00,csms-01,20,12,20 HTTP 503 in 60 s
+100132,Fleet heartbeat loss,A3,2026-11-04 09:42:09.787000+00:00,fleet,3,12,3 chargers dropped by ping timeout in 3 min

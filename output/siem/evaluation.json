@@ -1,0 +1,80 @@
+{
+  "A1": {
+    "name": "Authentication brute force (WebSocket credentials + RFID idTag guessing)",
+    "start": "2026-11-04 08:38:00+00:00",
+    "first_alert": "2026-11-04 08:38:30.114000+00:00",
+    "time_to_detect_s": 30.1,
+    "rules_expected": [
+      100110,
+      100111,
+      100112,
+      100113
+    ],
+    "rules_fired": [
+      100110,
+      100111,
+      100112,
+      100113
+    ],
+    "indicator_recall": 1.0,
+    "alerts_in_window": 4,
+    "detected": true
+  },
+  "A2": {
+    "name": "Rogue charger impersonation with abnormal/fraudulent transactions",
+    "start": "2026-11-04 09:05:00+00:00",
+    "first_alert": "2026-11-04 09:05:00.018000+00:00",
+    "time_to_detect_s": 0.0,
+    "rules_expected": [
+      100111,
+      100120,
+      100121,
+      100122,
+      100123,
+      100124,
+      100125
+    ],
+    "rules_fired": [
+      100111,
+      100120,
+      100121,
+      100122,
+      100123,
+      100124,
+      100125
+    ],
+    "indicator_recall": 1.0,
+    "alerts_in_window": 8,
+    "detected": true
+  },
+  "A3": {
+    "name": "Connection / BootNotification flood causing CSMS service disruption",
+    "start": "2026-11-04 09:38:00+00:00",
+    "first_alert": "2026-11-04 09:38:02.432000+00:00",
+    "time_to_detect_s": 2.4,
+    "rules_expected": [
+      100130,
+      100131,
+      100132,
+      100133,
+      100135
+    ],
+    "rules_fired": [
+      100130,
+      100131,
+      100132,
+      100133,
+      100135
+    ],
+    "indicator_recall": 1.0,
+    "alerts_in_window": 5,
+    "detected": true
+  },
+  "overall": {
+    "total_alerts": 19,
+    "true_positive_alerts": 19,
+    "false_positive_alerts": 0,
+    "alert_precision": 1.0,
+    "scenarios_detected": "3/3"
+  }
+}

@@ -1,0 +1,4 @@
+scenario,name,start_utc,end_utc,attacker_ip,target
+A1,Authentication brute force (WebSocket credentials + RFID idTag guessing),2026-11-04T08:38:00.000Z,2026-11-04T08:49:00.000Z,10.10.99.66,"CSMS 10.10.20.10:8080 / CP-03,CP-05"
+A2,Rogue charger impersonation with abnormal/fraudulent transactions,2026-11-04T09:05:00.000Z,2026-11-04T09:15:00.000Z,10.10.99.66,"CSMS 10.10.20.10:8080 / CP-03,CP-05"
+A3,Connection / BootNotification flood causing CSMS service disruption,2026-11-04T09:38:00.000Z,2026-11-04T09:46:00.000Z,10.10.99.66,"CSMS 10.10.20.10:8080 / CP-03,CP-05"

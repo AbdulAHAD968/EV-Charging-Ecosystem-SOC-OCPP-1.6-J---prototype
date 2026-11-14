@@ -1,0 +1,112 @@
+<!-- EV-Charging SOC custom rules (IDs 100100-100199). Place in /var/ossec/etc/rules/local_rules.xml
+     Logs are JSON, so Wazuh's built-in JSON decoder is used; fields are matched by name. -->
+<group name="ev_soc,ocpp,">
+
+  <!-- ===== Base rules ===== -->
+  <rule id="100100" level="0">
+    <decoded_as>json</decoded_as>
+    <field name="host">csms-01</field>
+    <description>EV-SOC: CSMS JSON event</description>
+  </rule>
+  <rule id="100101" level="0">
+    <if_sid>100100</if_sid>
+    <field name="event">ws_auth</field>
+    <field name="result">failure</field>
+    <description>EV-SOC: WebSocket authentication failure</description>
+  </rule>
+  <rule id="100102" level="0">
+    <if_sid>100100</if_sid>
+    <field name="event">id_authorize</field>
+    <field name="status">^Invalid$|^Blocked$|^Expired$</field>
+    <description>EV-SOC: RFID idTag rejected</description>
+  </rule>
+
+  <!-- ===== Scenario A1: authentication brute force ===== -->
+  <rule id="100110" level="10" frequency="10" timeframe="120">
+    <if_matched_sid>100101</if_matched_sid>
+    <same_field>src_ip</same_field>
+    <description>EV-SOC A1: WebSocket credential brute force from $(src_ip) (>=10 failures / 2 min)</description>
+    <mitre><id>T1110</id></mitre>
+  </rule>
+  <rule id="100111" level="13">
+    <if_sid>100100</if_sid>
+    <field name="event">ws_auth</field>
+    <field name="result">success</field>
+    <list field="src_ip" lookup="not_match_key">etc/lists/ev-charger-ips</list>
+    <description>EV-SOC A1/A2: WebSocket session for $(cp_id) from $(src_ip), an address that is not a registered charger</description>
+    <mitre><id>T1078</id></mitre>
+  </rule>
+  <rule id="100112" level="10" frequency="10" timeframe="120">
+    <if_matched_sid>100102</if_matched_sid>
+    <same_field>cp_id</same_field>
+    <description>EV-SOC A1: RFID idTag guessing at $(cp_id) (>=10 rejected tags / 2 min)</description>
+    <mitre><id>T1110.001</id></mitre>
+  </rule>
+  <rule id="100113" level="13">
+    <if_sid>100100</if_sid>
+    <if_matched_sid>100112</if_matched_sid>
+    <field name="event">id_authorize</field>
+    <field name="status">^Accepted$</field>
+    <same_field>cp_id</same_field>
+    <description>EV-SOC A1: idTag accepted at $(cp_id) right after a guessing burst - probable cloned card</description>
+  </rule>
+
+  <!-- ===== Scenario A2: rogue charger / abnormal transactions ===== -->
+  <rule id="100120" level="12">
+    <if_sid>100100</if_sid>
+    <field name="event">cp_boot</field>
+    <field name="firmware" negate="yes">^2\.4\.1$</field>
+    <description>EV-SOC A2: $(cp_id) booted with unexpected firmware $(firmware) / serial $(serial)</description>
+    <mitre><id>T1036</id></mitre>
+  </rule>
+  <rule id="100121" level="12">
+    <if_sid>100100</if_sid>
+    <field name="event">meter_value</field>
+    <field name="power_w">^\d{6,}</field>
+    <description>EV-SOC A2: implausible power (>= 100 kW) reported by $(cp_id): $(power_w) W</description>
+  </rule>
+  <rule id="100122" level="12">
+    <if_sid>100100</if_sid>
+    <field name="event">meter_value</field>
+    <field name="delta_wh">^-</field>
+    <description>EV-SOC A2: energy register went backwards on $(cp_id) (delta $(delta_wh) Wh)</description>
+  </rule>
+  <rule id="100123" level="9">
+    <if_sid>100100</if_sid>
+    <field name="event">data_transfer</field>
+    <field name="status">UnknownVendorId</field>
+    <description>EV-SOC A2: DataTransfer to unknown vendor "$(vendor_id)/$(message_id)" from $(cp_id) - probing</description>
+  </rule>
+  <rule id="100124" level="12">
+    <if_sid>100100</if_sid>
+    <field name="event">transaction_start</field>
+    <field name="meter_start_wh">^0$</field>
+    <description>EV-SOC A2: transaction started on $(cp_id) with meterStart=0 (register reset / spoofed charger)</description>
+  </rule>
+
+  <!-- ===== Scenario A3: flood / DoS ===== -->
+  <rule id="100130" level="12" frequency="100" timeframe="30">
+    <if_matched_sid>100100</if_matched_sid>
+    <field name="event">ws_auth</field>
+    <same_field>src_ip</same_field>
+    <description>EV-SOC A3: connection flood - >=100 WebSocket handshakes in 30 s from $(src_ip)</description>
+    <mitre><id>T1499</id></mitre>
+  </rule>
+  <rule id="100131" level="12" frequency="20" timeframe="60">
+    <if_sid>100100</if_sid>
+    <field name="status_code">^503$</field>
+    <description>EV-SOC A3: CSMS answering 503 (>=20 / min) - service saturated</description>
+  </rule>
+  <rule id="100132" level="12" frequency="3" timeframe="180">
+    <if_sid>100100</if_sid>
+    <field name="event">cp_disconnected</field>
+    <field name="reason">ping_timeout</field>
+    <description>EV-SOC A3: multiple chargers dropped by heartbeat timeout - fleet impact</description>
+  </rule>
+  <rule id="100133" level="10">
+    <if_sid>100100</if_sid>
+    <field name="event">service_health</field>
+    <field name="cpu_pct">^9\d\.|^100</field>
+    <description>EV-SOC A3: CSMS CPU >= 90% ($(cpu_pct)%)</description>
+  </rule>
+</group>

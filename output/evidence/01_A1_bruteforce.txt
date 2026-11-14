@@ -1,0 +1,45 @@
+## A1a  WebSocket credential guessing   filter: http.response.code==401 && ip.dst==10.10.99.66
+| Col  1: http.response.code==401 && ip.dst==10.10.99.66|
+| Date and time         | Frames | Bytes |              |
+| 2026-11-04 08:30:02Z  |      0 |     0 |              |
+| 2026-11-04 08:32:02Z  |      0 |     0 |              |
+| 2026-11-04 08:34:02Z  |      0 |     0 |              |
+| 2026-11-04 08:36:02Z  |      1 |   159 |              |
+| 2026-11-04 08:38:02Z  |     37 |  5883 |              |
+| 2026-11-04 08:40:02Z  |     14 |  2226 |              |
+| 2026-11-04 08:42:02Z  |      0 |     0 |              |
+| 2026-11-04 08:44:02Z  |      0 |     0 |              |
+| 2026-11-04 08:46:02Z  |      0 |     0 |              |
+| 2026-11-04 08:48:02Z  |      0 |     0 |              |
+
+## Failures per attacker (frames):
+      1 10.10.10.14
+    301 10.10.99.66
+
+## Credentials visible in clear (filter: http.authbasic && ip.src==10.10.99.66), first 12 and the success
+2026-11-04T08:38:00.001800000+0000	/ocpp/CP-05	CP-05:admin	python-websockets/12.0
+2026-11-04T08:38:03.145477000+0000	/ocpp/CP-08	CP-08:123456	python-websockets/12.0
+2026-11-04T08:38:06.611924000+0000	/ocpp/CP-09	CP-09:chargetech	python-websockets/12.0
+2026-11-04T08:38:09.610172000+0000	/ocpp/CP-06	CP-06:welcome1	python-websockets/12.0
+2026-11-04T08:38:13.118146000+0000	/ocpp/CP-09	CP-09:welcome1	python-websockets/12.0
+2026-11-04T08:38:16.052536000+0000	/ocpp/CP-10	CP-10:ocpp1.6	python-websockets/12.0
+2026-11-04T08:38:19.935378000+0000	/ocpp/CP-09	CP-09:admin	python-websockets/12.0
+2026-11-04T08:38:22.926033000+0000	/ocpp/CP-01	CP-01:charger	python-websockets/12.0
+2026-11-04T08:38:26.357250000+0000	/ocpp/CP-05	CP-05:default	python-websockets/12.0
+2026-11-04T08:38:30.095997000+0000	/ocpp/CP-01	CP-01:chargetech	python-websockets/12.0
+2026-11-04T08:38:32.794931000+0000	/ocpp/CP-03	CP-03:letmein	python-websockets/12.0
+2026-11-04T08:38:36.554887000+0000	/ocpp/CP-05	CP-05:welcome1	python-websockets/12.0
+...
+2026-11-04T08:40:51.784073000+0000	10.10.99.66	101	/q4yQ3xC21Fbi7+BVRyw3OQl6fw=
+
+## A1b  RFID guessing at CP-05   filter: websocket.payload.text contains "Authorize" && ip.src==10.10.10.15
+2026-11-04T08:44:00.000000000+0000	[2,"d406cb10-df53-4e2b-af16-a8d71ab94453","Authorize",{"idTag":"ID-5004379B"}]
+2026-11-04T08:44:04.264199000+0000	[2,"3ae7e660-521a-4239-ad09-1e2661d5c5d4","Authorize",{"idTag":"ID-9BF0973D"}]
+2026-11-04T08:44:08.507313000+0000	[2,"f499a395-931c-47d1-b822-b264dc205628","Authorize",{"idTag":"ID-E306E38B"}]
+2026-11-04T08:44:12.801914000+0000	[2,"f185ba57-de65-438c-ad51-2db848502ebe","Authorize",{"idTag":"ID-1701BFA8"}]
+2026-11-04T08:44:17.323737000+0000	[2,"07576ab1-27e3-45e3-8398-f53d94dac9b6","Authorize",{"idTag":"ID-1BC972CA"}]
+2026-11-04T08:48:12.794548000+0000	[2,"397cd5ec-3a4b-4678-a637-71b4121a2dc8","Authorize",{"idTag":"ID-A3B1799D"}]
+
+Authorize responses by status 08:44-08:50 (filter: websocket.payload.text contains "idTagInfo")
+      3 "status":"Accepted"
+     60 "status":"Invalid"

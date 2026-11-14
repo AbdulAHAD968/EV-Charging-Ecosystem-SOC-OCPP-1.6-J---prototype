@@ -1,0 +1,50 @@
+{
+  "CP-01": {
+    "ip": "10.10.10.11",
+    "rated_kw": 7.4,
+    "model": "CT-AC7",
+    "firmware": "2.4.1"
+  },
+  "CP-02": {
+    "ip": "10.10.10.12",
+    "rated_kw": 7.4,
+    "model": "CT-AC7",
+    "firmware": "2.4.1"
+  },
+  "CP-03": {
+    "ip": "10.10.10.13",
+    "rated_kw": 22.0,
+    "model": "CT-AC22",
+    "firmware": "2.4.1"
+  },
+  "CP-04": {
+    "ip": "10.10.10.14",
+    "rated_kw": 22.0,
+    "model": "CT-AC22",
+    "firmware": "2.4.1"
+  },
+  "CP-05": {
+    "ip": "10.10.10.15",
+    "rated_kw": 22.0,
+    "model": "CT-AC22",
+    "firmware": "2.4.1"
+  },
+  "CP-06": {
+    "ip": "10.10.10.16",
+    "rated_kw": 22.0,
+    "model": "CT-AC22",
+    "firmware": "2.4.1"
+  },
+  "CP-07": {
+    "ip": "10.10.10.17",
+    "rated_kw": 50.0,
+    "model": "CT-DC50",
+    "firmware": "2.4.1"
+  },
+  "CP-08": {
+    "ip": "10.10.10.18",
+    "rated_kw": 50.0,
+    "model": "CT-DC50",
+    "firmware": "2.4.1"
+  }
+}
