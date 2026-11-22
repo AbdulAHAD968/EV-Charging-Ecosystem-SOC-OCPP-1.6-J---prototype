@@ -28,6 +28,12 @@ export function resetOcpp() {
 export function handleOcppUpgrade(req, socket, head, cpId) {
   const t0 = Date.now();
   const reg = BY_ID[cpId];
+  // X-Sim-Src lets our own attack runners (server/src/attacks/*) label their synthetic
+  // traffic with the lab's display attacker IP (CONTRACT.md), since every real client
+  // here is also our own code on localhost and there is no untrusted network boundary
+  // to defend. This header must NOT be trusted this way if this server is ever exposed
+  // beyond a local, single-user demo: use req.socket.remoteAddress instead, or require a
+  // shared secret before honouring X-Sim-Src.
   const simSrc = req.headers['x-sim-src'];
   const srcIp = (Array.isArray(simSrc) ? simSrc[0] : simSrc) || reg?.ip || '127.0.0.1';
   const ua = req.headers['user-agent'] || 'unknown';
