@@ -60,7 +60,10 @@
 .lrn-btn-sm { padding: 3px 10px; margin-left: 8px; }
 .lrn-speed select { font: inherit; margin-left: 6px; padding: 5px; border-radius: 8px; border: 1px solid var(--hair, #e6dfd8); }
 .lrn-prog { font-family: Consolas, monospace; color: var(--muted, #6c6a64); }
-.lrn-seq-wrap { overflow: auto; max-height: 460px; border: 1px solid var(--hair, #e6dfd8); border-radius: 12px; background: #fff; box-shadow: var(--sh-xs, none); scroll-behavior: smooth; }
+/* No max-height: an inner scroll box defeats the point of "see the whole exchange at
+   once" lessons. If the diagram is genuinely taller than the viewport, the PAGE scrolls,
+   same as any other content, rather than trapping it in its own small scrolling pane. */
+.lrn-seq-wrap { overflow-x: auto; border: 1px solid var(--hair, #e6dfd8); border-radius: 12px; background: #fff; box-shadow: var(--sh-xs, none); }
 .lrn-seq { display: block; width: 100%; min-width: 640px; height: auto; color: var(--ink, #141413); }
 .lrn-caption { margin-top: 12px; padding: 14px; border-radius: 12px; background: var(--dark, #181715); color: #e7e2d6; line-height: 1.55; }
 .lrn-caption-empty { color: #a9a499; }

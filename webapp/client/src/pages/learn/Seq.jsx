@@ -3,8 +3,15 @@ import { Link } from 'react-router-dom';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 const W = 760;
-const ROW = 56;
-const TOP = 70;
+// Rows are kept compact on purpose: the whole point of the longer lessons (the full
+// charging session runs to 14 steps) is seeing the entire exchange end to end without
+// scrolling. A taller row reads nicer in isolation but forces a scrollbar on exactly the
+// lesson where "see it all at once" matters most, which defeats the lesson.
+// Note: the SVG's viewBox units are not 1:1 with rendered pixels; the container (.lrn-page
+// is up to ~1040px wide) stretches a 760-wide viewBox by roughly 1.3x, so these values are
+// chosen so that even after that upscale, 14 rows comfortably fit a normal browser window.
+const ROW = 30;
+const TOP = 48;
 
 // A message travels along its path in two phases: the line draws itself from sender to
 // receiver (like a cable lighting up), then a small packet glyph races along the finished
@@ -90,13 +97,9 @@ export function SeqDiagram({ lanes, msgs, shown, speed = 1, label }) {
     return () => clearTimeout(t);
   }, [shown, current, reduced, speed]);
 
-  // Auto-scroll the diagram so the most recent step stays in view during longer sequences.
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const y = TOP + Math.max(0, shown - 1) * ROW;
-    el.scrollTo({ top: Math.max(0, y - 90), behavior: reduced ? 'auto' : 'smooth' });
-  }, [shown, reduced]);
+  // The whole diagram renders at once now (see the ROW/TOP comment above), so there is no
+  // inner vertical scroll container to keep in view here; the page itself scrolls if the
+  // viewport is short, which is ordinary browser behaviour and needs no JS.
 
   return (
     <div className="lrn-seq-wrap" ref={wrapRef}>
