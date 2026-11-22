@@ -1,19 +1,55 @@
-.lrn-page { max-width: 1280px; margin: 0 auto; padding: 24px 16px 64px; color: var(--ink, #141413); font-size: 14px; }
-.lrn-h1 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -0.02em; font-size: 40px; margin: 0 0 16px; }
+.lrn-page { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; color: var(--ink, #141413); font-size: 14px; }
+.lrn-h1 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -0.02em; font-size: 40px; margin: 0 0 6px; }
+.lrn-lead { color: var(--muted, #6c6a64); margin: 0 0 22px; max-width: 70ch; }
 .lrn-h2 { font-family: Georgia, serif; font-weight: 400; letter-spacing: -0.02em; font-size: 28px; margin: 0 0 6px; }
 .lrn-h3 { font-family: Georgia, serif; font-weight: 400; font-size: 21px; margin: 24px 0 6px; }
 .lrn-p { max-width: 75ch; line-height: 1.55; color: var(--muted, #6c6a64); }
-.lrn-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; align-items: start; }
-@media (max-width: 900px) { .lrn-layout { grid-template-columns: 1fr; } .lrn-h1 { font-size: 32px; } }
-.lrn-nav { display: flex; flex-direction: column; gap: 6px; }
-@media (max-width: 900px) { .lrn-nav { flex-direction: row; overflow-x: auto; } .lrn-lesson { min-width: 220px; } }
-.lrn-lesson { display: flex; gap: 10px; text-align: left; font: inherit; padding: 10px 12px; border: 1px solid var(--hair, #e6dfd8); border-radius: 12px; background: var(--card, #efe9de); color: var(--ink, #141413); cursor: pointer; }
-.lrn-lesson.on { background: var(--dark, #181715); color: #faf9f5; }
-.lrn-lesson:focus-visible, .lrn-btn:focus-visible, .lrn-segbtn:focus-visible, .lrn-field:focus-visible { outline: 2px solid var(--coral, #cc785c); outline-offset: 2px; }
-.lrn-lnum { flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--coral, #cc785c); color: #fff; display: grid; place-items: center; }
+@media (max-width: 900px) { .lrn-h1 { font-size: 32px; } }
+
+/* step rail: replaces the old permanent lesson sidebar. a compact progress strip plus a
+   dropdown, so the stage (the diagram people should actually be looking at) gets the full
+   width and the lesson list stops competing with the main left nav for attention. */
+.lrn-rail { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.lrn-dots { display: flex; gap: 8px; }
+.lrn-dot {
+  width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--hair, #e6dfd8); background: var(--canvas, #faf9f5);
+  color: var(--muted, #6c6a64); font: 600 13px/1 var(--sans, inherit); cursor: pointer; display: grid; place-items: center;
+  box-shadow: var(--sh-xs, none); transition: background .18s ease, color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.lrn-dot:hover { transform: translateY(-1px); box-shadow: var(--sh-sm, none); }
+.lrn-dot.done { background: var(--card, #efe9de); color: var(--ink, #141413); border-color: var(--hair, #e6dfd8); }
+.lrn-dot.on { background: var(--coral, #cc785c); color: #fff; border-color: var(--coral, #cc785c); box-shadow: var(--sh-coral, none); }
+
+.lrn-picker { position: relative; }
+.lrn-picker-btn {
+  display: flex; align-items: center; gap: 10px; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--hair, #e6dfd8);
+  background: var(--canvas, #faf9f5); color: var(--ink, #141413); cursor: pointer; font: inherit; box-shadow: var(--sh-xs, none);
+  min-width: 260px; transition: box-shadow .15s ease, border-color .15s ease;
+}
+.lrn-picker-btn:hover { box-shadow: var(--sh-sm, none); }
+.lrn-picker-num { font-family: var(--mono, monospace); font-size: 12px; color: var(--muted, #6c6a64); background: var(--soft, #f5f0e8); padding: 2px 7px; border-radius: 6px; }
+.lrn-picker-title { font-weight: 600; flex: 1; text-align: left; }
+.lrn-picker-scrim { position: fixed; inset: 0; z-index: 40; }
+.lrn-picker-menu {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 41; width: min(380px, 90vw);
+  background: var(--canvas, #faf9f5); border: 1px solid var(--hair, #e6dfd8); border-radius: 14px; box-shadow: var(--sh-lg, none);
+  padding: 6px; display: flex; flex-direction: column; gap: 2px;
+}
+.lrn-picker-item {
+  display: flex; gap: 10px; text-align: left; font: inherit; padding: 10px 12px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--ink, #141413); cursor: pointer; transition: background .12s ease;
+}
+.lrn-picker-item:hover { background: var(--soft, #f5f0e8); }
+.lrn-picker-item.on { background: var(--card, #efe9de); }
+.lrn-lnum { flex: none; width: 24px; height: 24px; border-radius: 50%; background: var(--coral, #cc785c); color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 700; }
 .lrn-ltitle { display: block; font-weight: 600; }
-.lrn-lblurb { display: block; font-size: 13px; opacity: .75; }
-.lrn-stage { background: var(--canvas, #faf9f5); border: 1px solid var(--hair, #e6dfd8); border-radius: 16px; padding: 20px; min-width: 0; }
+.lrn-lblurb { display: block; font-size: 13px; color: var(--muted, #6c6a64); }
+
+.lrn-stepbtns { display: flex; justify-content: space-between; margin-bottom: 14px; }
+.lrn-stepbtns .ins-btn:only-child { margin-left: auto; }
+
+.lrn-lesson:focus-visible, .lrn-btn:focus-visible, .lrn-segbtn:focus-visible, .lrn-field:focus-visible { outline: 2px solid var(--coral, #cc785c); outline-offset: 2px; }
+.lrn-stage { background: var(--canvas, #faf9f5); border: 1px solid var(--hair, #e6dfd8); border-radius: 16px; padding: 22px; min-width: 0; box-shadow: var(--sh-sm, none); }
 .lrn-seg { display: flex; gap: 6px; flex-wrap: wrap; margin: 12px 0; }
 .lrn-segbtn { font: inherit; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--hair, #e6dfd8); background: var(--card, #efe9de); color: var(--ink, #141413); cursor: pointer; }
 .lrn-segbtn.on { background: var(--coral, #cc785c); border-color: var(--coral, #cc785c); color: #fff; }
@@ -24,7 +60,7 @@
 .lrn-btn-sm { padding: 3px 10px; margin-left: 8px; }
 .lrn-speed select { font: inherit; margin-left: 6px; padding: 5px; border-radius: 8px; border: 1px solid var(--hair, #e6dfd8); }
 .lrn-prog { font-family: Consolas, monospace; color: var(--muted, #6c6a64); }
-.lrn-seq-wrap { overflow-x: auto; border: 1px solid var(--hair, #e6dfd8); border-radius: 12px; background: #fff; }
+.lrn-seq-wrap { overflow: auto; max-height: 460px; border: 1px solid var(--hair, #e6dfd8); border-radius: 12px; background: #fff; box-shadow: var(--sh-xs, none); scroll-behavior: smooth; }
 .lrn-seq { display: block; width: 100%; min-width: 640px; height: auto; color: var(--ink, #141413); }
 .lrn-caption { margin-top: 12px; padding: 14px; border-radius: 12px; background: var(--dark, #181715); color: #e7e2d6; line-height: 1.55; }
 .lrn-caption-empty { color: #a9a499; }

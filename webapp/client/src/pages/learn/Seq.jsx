@@ -1,11 +1,76 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 
 const W = 760;
-const ROW = 44;
-const TOP = 64;
+const ROW = 56;
+const TOP = 70;
+
+// A message travels along its path in two phases: the line draws itself from sender to
+// receiver (like a cable lighting up), then a small packet glyph races along the finished
+// line and the receiving lane flashes on arrival. This reads as something actually moving
+// across a network, not just an arrow that appears.
+function ArrowMsg({ m, x1, x2, y, color, current, dimmed, reduced, onArrive }) {
+  const dir = x2 >= x1 ? 1 : -1;
+  const tipX = x2 - dir * 10;
+  const dashed = m.kind === 'attack';
+  const lineDuration = reduced ? 0 : current ? 0.5 : 0;
+  const [arrived, setArrived] = useState(!current || reduced);
+
+  useEffect(() => {
+    if (!current || reduced) { setArrived(true); return undefined; }
+    setArrived(false);
+    const t = setTimeout(() => { setArrived(true); onArrive && onArrive(); }, lineDuration * 1000);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, reduced]);
+
+  return (
+    <g opacity={dimmed ? 0.4 : 1}>
+      <motion.line
+        x1={x1} y1={y} x2={tipX} y2={y} stroke={color} strokeWidth={current ? 3 : 2}
+        strokeDasharray={dashed ? '7 5' : undefined} strokeLinecap="round"
+        initial={current && !reduced ? { pathLength: 0 } : { pathLength: 1 }}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: lineDuration, ease: 'easeOut' }}
+      />
+      {/* arrowhead, drawn once the line has reached the tip so it doesn't appear early */}
+      <motion.path
+        d={`M${tipX - dir * 9} ${y - 5} L${tipX + dir * 1} ${y} L${tipX - dir * 9} ${y + 5} Z`}
+        fill={color}
+        initial={current && !reduced ? { opacity: 0 } : { opacity: 1 }}
+        animate={{ opacity: arrived ? 1 : current ? 0 : 1 }}
+        transition={{ duration: 0.12 }}
+      />
+      <text x={(x1 + x2) / 2} y={y - 11} textAnchor="middle" fontSize="13" fill="currentColor">{m.label}</text>
+      {current && !reduced ? (
+        <motion.circle
+          r="6.5" cy={y} fill={color}
+          initial={{ cx: x1, opacity: 1 }}
+          animate={{ cx: tipX }}
+          transition={{ duration: lineDuration, ease: 'easeOut' }}
+          style={{ filter: `drop-shadow(0 0 5px ${color})` }}
+        />
+      ) : null}
+    </g>
+  );
+}
+
+// A soft expanding ring on the receiving lane at the moment a packet lands, so "arrival"
+// reads as an event rather than the line simply having drawn itself.
+function ArrivalPulse({ cx, cy, color }) {
+  return (
+    <motion.circle
+      cx={cx} cy={cy} r={10} fill="none" stroke={color} strokeWidth={2}
+      initial={{ r: 4, opacity: 0.9 }}
+      animate={{ r: 26, opacity: 0 }}
+      transition={{ duration: 0.6, ease: 'easeOut' }}
+    />
+  );
+}
 
 export function SeqDiagram({ lanes, msgs, shown, speed = 1, label }) {
+  const reduced = useReducedMotion();
   const n = lanes.length;
   const x = (id) => {
     const i = Math.max(0, lanes.findIndex((l) => l.id === id));
@@ -13,50 +78,74 @@ export function SeqDiagram({ lanes, msgs, shown, speed = 1, label }) {
   };
   const H = TOP + Math.max(msgs.length, 1) * ROW + 16;
   const colour = (m) => (m.kind === 'attack' ? 'var(--coral, #cc785c)' : m.kind === 'error' ? 'var(--error, #c64545)' : m.kind === 'result' ? 'var(--teal, #5db8a6)' : 'var(--ink, #141413)');
+  const current = msgs[shown - 1];
+  const [pulseKey, setPulseKey] = useState(0);
+  const [activeLane, setActiveLane] = useState(null);
+  const wrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!current) { setActiveLane(null); return; }
+    setActiveLane(current.from);
+    const t = setTimeout(() => setActiveLane(current.to), reduced ? 0 : 480 / speed);
+    return () => clearTimeout(t);
+  }, [shown, current, reduced, speed]);
+
+  // Auto-scroll the diagram so the most recent step stays in view during longer sequences.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const y = TOP + Math.max(0, shown - 1) * ROW;
+    el.scrollTo({ top: Math.max(0, y - 90), behavior: reduced ? 'auto' : 'smooth' });
+  }, [shown, reduced]);
+
   return (
-    <div className="lrn-seq-wrap">
+    <div className="lrn-seq-wrap" ref={wrapRef}>
       <svg className="lrn-seq" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label || 'Sequence diagram'}>
-        <defs>
-          {['a0', 'a1', 'a2', 'a3'].map((id, i) => (
-            <marker key={id} id={`lrn-${id}`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M0 0L10 5L0 10z" fill={['var(--ink, #141413)', 'var(--teal, #5db8a6)', 'var(--coral, #cc785c)', 'var(--error, #c64545)'][i]} />
-            </marker>
-          ))}
-        </defs>
-        {lanes.map((l) => (
-          <g key={l.id}>
-            <rect x={x(l.id) - 80} y="8" width="160" height="30" rx="8" fill={l.id === 'att' ? 'var(--coral, #cc785c)' : 'var(--dark, #181715)'} />
-            <text x={x(l.id)} y="28" textAnchor="middle" fontSize="13" fill="#faf9f5">{l.label}</text>
-            <line x1={x(l.id)} y1="38" x2={x(l.id)} y2={H - 6} stroke="var(--hair, #e6dfd8)" strokeWidth="2" strokeDasharray="4 4" />
-          </g>
-        ))}
-        {msgs.slice(0, shown).map((m, i) => {
-          const y = TOP + i * ROW;
-          const cur = i === shown - 1;
-          const c = colour(m);
-          const mk = m.kind === 'attack' ? 'a2' : m.kind === 'error' ? 'a3' : m.kind === 'result' ? 'a1' : 'a0';
-          const x1 = x(m.from); const x2 = x(m.to);
-          const dir = x2 >= x1 ? 1 : -1;
-          if (m.note) {
-            return (
-              <g key={`${i}-${cur}`} opacity={cur ? 1 : 0.65}>
-                <rect x={x1 - 90} y={y - 14} width="180" height="28" rx="8" fill="none" stroke={c} strokeWidth={cur ? 2.5 : 1.5} />
-                <text x={x1} y={y + 5} textAnchor="middle" fontSize="13" fill="currentColor">{m.label}</text>
-              </g>
-            );
-          }
+        {lanes.map((l) => {
+          const isActive = activeLane === l.id;
           return (
-            <g key={`${i}-${cur}`} opacity={cur ? 1 : 0.65}>
-              <line x1={x1} y1={y} x2={x2 - dir * 4} y2={y} stroke={c} strokeWidth={cur ? 3 : 2} strokeDasharray={m.kind === 'attack' ? '6 4' : undefined} markerEnd={`url(#lrn-${mk})`} />
-              <text x={(x1 + x2) / 2} y={y - 7} textAnchor="middle" fontSize="13" fill="currentColor">{m.label}</text>
-              {cur ? (
-                <circle r="6" cy={y} fill={c}>
-                  <animate attributeName="cx" from={x1} to={x2} dur={`${0.9 / speed}s`} fill="freeze" />
-                </circle>
-              ) : null}
+            <g key={l.id}>
+              <motion.rect
+                x={x(l.id) - 80} y="8" width="160" height="32" rx="9"
+                fill={l.id === 'att' ? 'var(--coral, #cc785c)' : 'var(--dark, #181715)'}
+                animate={{ scale: isActive && !reduced ? 1.05 : 1, filter: isActive ? 'brightness(1.15)' : 'brightness(1)' }}
+                transition={{ duration: 0.25 }}
+                style={{ transformOrigin: `${x(l.id)}px 24px` }}
+              />
+              <text x={x(l.id)} y="29" textAnchor="middle" fontSize="13" fill="#faf9f5">{l.label}</text>
+              <line x1={x(l.id)} y1="40" x2={x(l.id)} y2={H - 6} stroke="var(--hair, #e6dfd8)" strokeWidth="2" strokeDasharray="4 4" />
             </g>
           );
         })}
+        <AnimatePresence initial={false}>
+          {msgs.slice(0, shown).map((m, i) => {
+            const y = TOP + i * ROW;
+            const cur = i === shown - 1;
+            const c = colour(m);
+            const x1 = x(m.from); const x2 = x(m.to);
+            if (m.note) {
+              return (
+                <motion.g
+                  key={`${i}-note`}
+                  initial={cur && !reduced ? { opacity: 0, scale: 0.9 } : { opacity: 1, scale: 1 }}
+                  animate={{ opacity: cur ? 1 : 0.55, scale: 1 }}
+                  transition={{ duration: 0.25 }}
+                  style={{ transformOrigin: `${x1}px ${y}px` }}
+                >
+                  <rect x={x1 - 90} y={y - 15} width="180" height="30" rx="9" fill="none" stroke={c} strokeWidth={cur ? 2.5 : 1.5} />
+                  <text x={x1} y={y + 5} textAnchor="middle" fontSize="13" fill="currentColor">{m.label}</text>
+                </motion.g>
+              );
+            }
+            return (
+              <g key={`${i}-arrow`}>
+                <ArrowMsg m={m} x1={x1} x2={x2} y={y} color={c} current={cur} dimmed={!cur} reduced={reduced}
+                  onArrive={() => setPulseKey((k) => k + 1)} />
+                {cur && !reduced ? <ArrivalPulse key={pulseKey} cx={x2} cy={y} color={c} /> : null}
+              </g>
+            );
+          })}
+        </AnimatePresence>
       </svg>
     </div>
   );
@@ -106,7 +195,10 @@ export function Controls({ p, total }) {
 export function Caption({ step, open, setOpen }) {
   if (!step) return <div className="lrn-caption lrn-caption-empty">Press Play or Step to begin.</div>;
   return (
-    <div className="lrn-caption" aria-live="polite">
+    <motion.div
+      className="lrn-caption" aria-live="polite" key={step.cap}
+      initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}
+    >
       <div className="lrn-cap-text">{step.cap}</div>
       {step.rule ? <div className="lrn-rule">Rule that would fire: <b>{step.rule}</b></div> : null}
       {step.raw ? (
@@ -115,7 +207,7 @@ export function Caption({ step, open, setOpen }) {
           {open ? <pre className="lrn-raw">{step.raw}</pre> : null}
         </>
       ) : null}
-    </div>
+    </motion.div>
   );
 }
 
