@@ -1,0 +1,14 @@
+{
+  "name": "ev-soc-live",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EV-SOC Live: localhost-only EV charging SOC lab (OCPP CSMS, attacks, detection, dashboard)",
+  "scripts": {
+    "install:all": "npm install && npm --prefix server install && npm --prefix client install",
+    "dev": "concurrently -n server,client -c coral,teal \"npm --prefix server run dev\" \"npm --prefix client run dev\"",
+    "start": "concurrently -n server,client \"npm --prefix server run start\" \"npm --prefix client run dev\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
