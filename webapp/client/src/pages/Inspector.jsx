@@ -227,9 +227,10 @@ function AlertsTab({ alerts, packets, logs, jump }) {
       <div className="ins-alerts">
         {alerts.length === 0 ? <div className="ins-empty">No alerts yet. Start an attack on the Attacks page.</div> : null}
         {alerts.map((a) => {
-          const from = a.ts - WINDOW_MS; const to = a.ts + WINDOW_MS;
-          const np = packets.filter((p) => p.ts >= from && p.ts <= to).length;
-          const nl = logs.filter((l) => { const t = tsOf(l); return t >= from && t <= to; }).length;
+          const aMs = typeof a.ts === 'number' ? a.ts : Date.parse(a.ts);
+          const from = aMs - WINDOW_MS; const to = aMs + WINDOW_MS;
+          const np = Number.isFinite(aMs) ? packets.filter((p) => p.ts >= from && p.ts <= to).length : 0;
+          const nl = Number.isFinite(aMs) ? logs.filter((l) => { const t = tsOf(l); return t >= from && t <= to; }).length : 0;
           return (
             <div key={a.id} className="ins-alert">
               <div>
@@ -254,7 +255,17 @@ export default function Inspector() {
   const [filter, setFilter] = useState('');
   const [selected, setSelected] = useState(null);
   const [win, setWin] = useState(null);
-  const jump = (a, t) => { setWin({ from: a.ts - WINDOW_MS, to: a.ts + WINDOW_MS }); setTab(t); };
+  // Alert timestamps are ISO strings (see detect/engine.js), while packet/log timestamps
+  // used for filtering below are epoch milliseconds (see packets.js, tsOf() above).
+  // Converting here, at the one place that turns an alert into a time window, keeps that
+  // mismatch from ever reaching a bare numeric subtraction (which would silently produce
+  // NaN, and render as "Invalid Date" in the window shown above the table).
+  const jump = (a, t) => {
+    const ms = typeof a.ts === 'number' ? a.ts : Date.parse(a.ts);
+    if (!Number.isFinite(ms)) return; // malformed alert timestamp: do nothing rather than show a broken window
+    setWin({ from: ms - WINDOW_MS, to: ms + WINDOW_MS });
+    setTab(t);
+  };
   const tabs = [['packets', 'Packets'], ['logs', 'CSMS logs'], ['alerts', 'Alerts']];
   return (
     <div className="ins-page">
