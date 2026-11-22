@@ -1,4 +1,5 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useLive, startAttack, stopAttack, reset } from '../store';
 import { ATTACKS, EXPECTED, RULE_HELP } from '../data/attacks';
 import './Attacks.css';
@@ -10,7 +11,7 @@ function StateBadge({ state }) {
   return <span className={`atk-badge atk-badge-${s}`}>{s}</span>;
 }
 
-function AttackCard({ def, attack, steps, alerts }) {
+function AttackPanel({ def, attack, steps, alerts }) {
   const { id } = def;
   const running = attack && attack.state === 'running';
   const progress = Math.round(((attack && attack.progress) || 0) * 100);
@@ -25,10 +26,12 @@ function AttackCard({ def, attack, steps, alerts }) {
   return (
     <section className="atk-card" aria-label={def.title}>
       <header className="atk-head">
-        <h2 className="atk-title">{def.title}</h2>
+        <div>
+          <h2 className="atk-title">{def.title}</h2>
+          <p className="atk-blurb">{def.blurb}</p>
+        </div>
         <StateBadge state={attack && attack.state} />
       </header>
-      <p className="atk-blurb">{def.blurb}</p>
       <div className="atk-controls">
         {running ? (
           <button className="atk-btn atk-btn-stop" onClick={() => stopAttack(id)}>Stop attack</button>
@@ -39,8 +42,8 @@ function AttackCard({ def, attack, steps, alerts }) {
           <div className="atk-progress-fill" style={{ width: `${progress}%` }} />
         </div>
         <span className="atk-pct">{progress}%</span>
+        {attack && attack.step ? <div className="atk-step">Now: {attack.step}</div> : null}
       </div>
-      {attack && attack.step ? <div className="atk-step">Now: {attack.step}</div> : null}
       <div className="atk-cols">
         <div className="atk-col">
           <h3 className="atk-sub">Attacker view</h3>
@@ -81,6 +84,9 @@ function AttackCard({ def, attack, steps, alerts }) {
 
 export default function Attacks() {
   const { attacks, attackSteps, alerts, connected } = useLive();
+  const [id, setId] = useState(ATTACKS[0].id);
+  const def = ATTACKS.find((d) => d.id === id);
+
   return (
     <div className="atk-page">
       <div className="atk-hero">
@@ -91,15 +97,42 @@ export default function Attacks() {
         Localhost lab. These attacks only target the local simulated CSMS on this machine. Nothing leaves your computer.
         {!connected ? ' (Not connected to the server right now.)' : ''}
       </div>
-      {ATTACKS.map((d) => (
-        <AttackCard
-          key={d.id}
-          def={d}
-          attack={attacks[d.id]}
-          steps={attackSteps.filter((s) => s.id === d.id)}
-          alerts={alerts}
-        />
-      ))}
+
+      {/* Horizontal attack tabs: each attack gets the page's full width while selected,
+          instead of three cards competing for space stacked on top of each other. A small
+          status dot shows at a glance which attacks are running without opening them. */}
+      <div className="atk-tabs" role="tablist" aria-label="Attack scenarios">
+        {ATTACKS.map((d) => {
+          const state = (attacks[d.id] && attacks[d.id].state) || 'idle';
+          return (
+            <button
+              key={d.id} role="tab" aria-selected={id === d.id}
+              className={`atk-tab ${id === d.id ? 'on' : ''}`}
+              onClick={() => setId(d.id)}
+            >
+              <span className={`atk-tab-dot atk-tab-dot-${state}`} aria-hidden="true" />
+              {d.title}
+            </button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={id}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -4 }}
+          transition={{ duration: 0.2 }}
+        >
+          <AttackPanel
+            def={def}
+            attack={attacks[id]}
+            steps={attackSteps.filter((s) => s.id === id)}
+            alerts={alerts}
+          />
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

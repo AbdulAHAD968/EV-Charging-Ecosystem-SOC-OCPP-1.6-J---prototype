@@ -233,11 +233,19 @@ select.sel { font: 500 13px var(--sans); padding: 7px 10px; border-radius: var(-
 .bay.rogue { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(204,120,92,.45); animation: ring 1.2s ease-in-out infinite; }
 .bay.offline { filter: grayscale(1); opacity: .72; }
 @keyframes ring { 50% { box-shadow: 0 0 0 7px rgba(204,120,92,.15); } }
-.bay-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; min-height: 26px; }
+.bay-top { display: flex; justify-content: space-between; align-items: center; gap: 6px; height: 26px; }
 .bay-id { font: 600 13px var(--mono); color: var(--ink); }
-.bay svg { display: block; width: 100%; height: auto; }
-.bay-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 4px; font-size: 13px; }
+/* Fixed aspect-ratio box: the SVG's rendered height must never depend on the current
+   width of its siblings (status badge text, etc). Without this, a badge changing from
+   "Charging" to "Available" nudges the flex row's available width by a few pixels, which
+   with height:auto on the scaled SVG recomputed a new pixel height every single live
+   update, i.e. 8 bays' SVGs each stepping their height by ~1px in sync every tick, read
+   by the eye as the whole grid shaking. aspect-ratio pins the height purely to the box's
+   own width, independent of anything else on the row. */
+.bay svg { display: block; width: 100%; aspect-ratio: 240 / 150; height: auto; }
+.bay-meta { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; margin-top: 4px; font-size: 13px; height: 18px; }
 .bay-meta b { font-family: var(--serif); font-size: 20px; font-weight: 400; color: var(--ink); font-variant-numeric: tabular-nums; }
+.bay-meta span:first-child { white-space: nowrap; }
 .rogue-tag { position: absolute; left: 50%; top: -10px; transform: translateX(-50%); background: var(--coral); color: #fff; font: 700 12px var(--sans); letter-spacing: 1px; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
 .flow { stroke-dasharray: 6 6; animation: flow 0.7s linear infinite; }
 @keyframes flow { to { stroke-dashoffset: -12; } }
