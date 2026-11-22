@@ -12,6 +12,27 @@ npm run dev             # server on :4000 (node --watch) and Vite client on :517
 
 Open http://localhost:5173. The server alone: `cd server && npm start`. Set `PORT` to change the server port.
 
+## Docker / Coolify deployment
+
+A single Dockerfile builds the React client and serves it from the same Express process
+that runs the OCPP backend, so the whole app is one container on one port: no reverse
+proxy or CORS setup is needed.
+
+```
+cd webapp
+docker compose up --build      # local test, http://localhost:4000
+```
+
+To deploy with Coolify: point it at this repository with build context `webapp/` and
+Dockerfile path `webapp/Dockerfile`, and set the exposed/internal port to **4000**. Do
+not use port 8000: Coolify reserves that for itself on the host. `PORT` is read from the
+environment if you need a different internal port (set it both as a container env var
+and in Coolify's port mapping).
+
+The image has no external dependencies (no database, no third-party API) and all state
+is in-memory, so there is nothing else to configure. `GET /healthz` is the health check
+endpoint.
+
 ## Pages
 
 - `/` Site View: the eight chargers (status, power, energy, SoC, rogue flag).

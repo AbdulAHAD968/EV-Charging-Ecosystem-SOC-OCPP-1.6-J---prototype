@@ -17,6 +17,9 @@
 //   ./detect/engine.js  startDetection(), getAlerts(), getScore(), resetDetection()
 //   ./detect/rules.js   RULES
 import http from 'node:http';
+import path from 'node:path';
+import fs from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { WebSocketServer } from 'ws';
 import { bus } from './bus.js';
@@ -26,6 +29,15 @@ import * as ocpp from './ocpp.js';
 import * as chargers from './chargers.js';
 
 const PORT = Number(process.env.PORT || 4000);
+
+// In production (Docker), the client is built to ../../client/dist and served from this
+// same process and port, so the browser and the OCPP/UI WebSockets share one origin and
+// no reverse proxy or CORS setup is needed. In local dev this directory does not exist
+// (the client runs on its own Vite dev server, port 5173, proxying to this one) and the
+// static middleware below is simply skipped.
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const CLIENT_DIST = path.join(__dirname, '..', '..', 'client', 'dist');
+const hasClientBuild = fs.existsSync(path.join(CLIENT_DIST, 'index.html'));
 
 async function optional(path) {
   try { return await import(path); } catch (e) {
@@ -99,6 +111,22 @@ app.post('/api/reset', (_req, res) => {
   broadcast(snapshot());
   res.json({ ok: true });
 });
+
+app.get('/healthz', (_req, res) => res.json({ ok: true }));
+
+// ---- Static client (production/Docker only; see hasClientBuild above) ----
+if (hasClientBuild) {
+  app.use(express.static(CLIENT_DIST));
+  // SPA fallback: any non-API, non-OCPP GET that does not match a static file
+  // falls through to index.html so React Router can handle client-side routes.
+  app.get(/^(?!\/api\/|\/ocpp\/|\/ui$).*/, (_req, res) => {
+    res.sendFile(path.join(CLIENT_DIST, 'index.html'));
+  });
+} else {
+  app.get('/', (_req, res) => {
+    res.type('text/plain').send('EV-SOC Live backend is running. The client dev server runs separately on :5173 in development.');
+  });
+}
 
 // ---- WebSockets ----------------------------------------------------------
 const server = http.createServer(app);

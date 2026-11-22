@@ -1,0 +1,9 @@
+**/node_modules
+**/dist
+**/logs
+**/.git
+**/*.log
+client/dev
+server/test
+server/verify*.mjs
+.playwright-mcp
