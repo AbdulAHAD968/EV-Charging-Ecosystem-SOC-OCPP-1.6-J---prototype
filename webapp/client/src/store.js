@@ -37,7 +37,18 @@ function connect() {
   ws.onclose = () => { state.connected = false; emit(); clearTimeout(timer); timer = setTimeout(connect, 1500); };
   ws.onmessage = ev => { try { handle(JSON.parse(ev.data)); } catch { /* ignore malformed frame */ } };
 }
-const post = (u) => fetch(u, { method: 'POST' }).catch(() => {});
+// On a public deployment the server can require a shared control token (CONTROL_TOKEN
+// env var) on the state-changing endpoints, so a stranger with the link cannot start
+// attacks or reset the demo at will. The operator sets it once in this browser with:
+//   localStorage.setItem('evsoc.controlToken', '<token>')
+// If the server has no CONTROL_TOKEN configured (e.g. local dev), it ignores the header
+// entirely, so this is a no-op there.
+function controlHeaders() {
+  let token = null;
+  try { token = localStorage.getItem('evsoc.controlToken'); } catch { /* ignore */ }
+  return token ? { 'X-Control-Token': token } : {};
+}
+const post = (u) => fetch(u, { method: 'POST', headers: controlHeaders() }).catch(() => {});
 export const startAttack = (id) => post(`/api/attack/${id}/start`);
 export const stopAttack = (id) => post(`/api/attack/${id}/stop`);
 export const reset = () => { state.alerts = []; state.attackSteps = []; emit(); return post('/api/reset'); };

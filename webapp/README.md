@@ -33,6 +33,23 @@ The image has no external dependencies (no database, no third-party API) and all
 is in-memory, so there is nothing else to configure. `GET /healthz` is the health check
 endpoint.
 
+### Protecting the demo controls on a public URL
+
+If this is reachable at a public domain, anyone with the link can otherwise start
+attacks or reset the live demo (the read-only Site/Dashboard views and the data itself
+are not sensitive: everything is synthetic lab data). To stop that, set a `CONTROL_TOKEN`
+environment variable on the Coolify service, any value you choose. With it set:
+
+- `POST /api/attack/:id/start`, `POST /api/attack/:id/stop` and `POST /api/reset` all
+  require a matching `X-Control-Token` header, and return 401 without it.
+- Every read-only route (`GET /api/state`, `GET /api/rules`, the `/ui` live feed, every
+  page in the browser) stays open, so the demo is still viewable by anyone with the link.
+- As the operator, open the deployed site, open the browser devtools console, and run:
+  `localStorage.setItem('evsoc.controlToken', '<the same value you set in Coolify>')`.
+  The Attack Console and Reset button will then work from that browser.
+- If `CONTROL_TOKEN` is left unset (e.g. local dev, or a private deployment only you can
+  reach), this check is skipped entirely and nothing changes.
+
 ## Pages
 
 - `/` Site View: the eight chargers (status, power, energy, SoC, rogue flag).

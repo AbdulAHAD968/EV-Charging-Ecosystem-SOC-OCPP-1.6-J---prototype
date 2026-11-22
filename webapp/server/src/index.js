@@ -89,6 +89,21 @@ app.use(express.json());
 app.get('/api/state', (_req, res) => res.json(snapshot()));
 app.get('/api/rules', (_req, res) => res.json(rulesMod?.RULES || []));
 
+// Optional shared-token gate for the state-changing endpoints (start/stop attack, reset).
+// This app is meant to be watched by anyone with the link (a public demo), so read-only
+// routes, the /ui feed and the OCPP endpoint stay open. But on a public deployment a
+// stranger could otherwise grief a live demo by starting attacks or resetting state at
+// will; set CONTROL_TOKEN in the environment to require it, as a header on those few
+// routes only. If CONTROL_TOKEN is unset (e.g. local dev), this check is a no-op, so
+// nothing changes for the localhost lab use case this app was originally built for.
+const CONTROL_TOKEN = process.env.CONTROL_TOKEN || null;
+function requireControlToken(req, res, next) {
+  if (!CONTROL_TOKEN) return next();
+  const got = req.headers['x-control-token'];
+  if (got === CONTROL_TOKEN) return next();
+  return res.status(401).json({ ok: false, error: 'missing or invalid X-Control-Token header' });
+}
+
 function attackRoute(action) {
   return (req, res) => {
     const id = String(req.params.id).toUpperCase();
@@ -98,10 +113,10 @@ function attackRoute(action) {
     res.json({ ok: true, id, state: attackStates()[id] });
   };
 }
-app.post('/api/attack/:id/start', attackRoute('start'));
-app.post('/api/attack/:id/stop', attackRoute('stop'));
+app.post('/api/attack/:id/start', requireControlToken, attackRoute('start'));
+app.post('/api/attack/:id/stop', requireControlToken, attackRoute('stop'));
 
-app.post('/api/reset', (_req, res) => {
+app.post('/api/reset', requireControlToken, (_req, res) => {
   try { attacks?.resetAttacks?.(); } catch (e) { console.warn('resetAttacks failed', e.message); }
   try { engine?.resetDetection?.(); } catch (e) { console.warn('resetDetection failed', e.message); }
   health.resetHealth();
