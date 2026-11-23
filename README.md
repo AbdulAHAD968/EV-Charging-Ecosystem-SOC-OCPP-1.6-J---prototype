@@ -10,7 +10,15 @@ A prototype Security Operations Center for a public EV charging site. Eight simu
 | M. Hassaan | 23i-2038 | Attack Generation Lead |
 | Abdul Ahad | 23i-2014 | Detection Lead |
 
-The full write-up is in [docs/EV_SOC_Report.docx](docs/EV_SOC_Report.docx).
+The full write-up is in [docs/EV_SOC_Report.docx](docs/EV_SOC_Report.docx). A live, deployed version of this project, with a real OCPP server, a working attack console and a SOC dashboard, lives in [webapp/](webapp/) (README: [webapp/README.md](webapp/README.md)).
+
+## Project overview video
+
+A two-minute walkthrough of the project: the problem, the architecture, the three attacks, and the results.
+
+https://github.com/AbdulAHAD968/EV-Charging-Ecosystem-SOC-OCPP-1.6-J---prototype/raw/main/webapp/docs/media/demo.mp4
+
+GitHub plays this inline once the repository is public, or you can [download it directly](webapp/docs/media/demo.mp4).
 
 ## Overview
 

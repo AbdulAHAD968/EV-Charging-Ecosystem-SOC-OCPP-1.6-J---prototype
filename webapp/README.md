@@ -2,6 +2,36 @@
 
 A localhost-only lab that simulates an EV charging network and a small SOC around it. Eight simulated chargers talk OCPP 1.6-J to a deliberately weak central system. Three scripted attacks run against it, and a detection engine raises alerts on the resulting logs. Everything is shown live in a browser.
 
+A deployed instance is live at [soc.sevenlabs.site](https://soc.sevenlabs.site). The attack and reset controls there may require a token; see [Protecting the demo controls on a public URL](#protecting-the-demo-controls-on-a-public-url) below.
+
+## Screenshots
+
+All of the following are real captures of the running app with live data (not mockups).
+
+**Site View**: the eight chargers, live power, energy and the alert feed.
+
+![Site View](docs/media/screenshot-site.png)
+
+**SOC Dashboard**: CPU, latency, handshake rate and fleet availability, updating live.
+
+![Dashboard](docs/media/screenshot-dashboard.png)
+
+**Attack Console**: A1 running mid-attack, with the attacker's own narration on the left and the matching SOC alerts on the right.
+
+![Attack Console](docs/media/screenshot-attacks.png)
+
+**Packet Inspector**: a Wireshark-style live packet view with display filters, tabs for the CSMS log stream and the alert feed.
+
+![Packet Inspector](docs/media/screenshot-inspector.png)
+
+**Detection Scorecard**: recall, time to detect and full rule coverage for the run shown above.
+
+![Scorecard](docs/media/screenshot-scorecard.png)
+
+**OCPP Protocol Lab**: the Learn section's animated sequence diagrams.
+
+![Learn](docs/media/screenshot-learn.png)
+
 ## Run
 
 ```
