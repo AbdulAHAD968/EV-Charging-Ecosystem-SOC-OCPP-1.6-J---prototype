@@ -16,9 +16,9 @@ The full write-up is in [docs/EV_SOC_Report.docx](docs/EV_SOC_Report.docx). A li
 
 A two-minute walkthrough of the project: the problem, the architecture, the three attacks, and the results.
 
-https://github.com/AbdulAHAD968/EV-Charging-Ecosystem-SOC-OCPP-1.6-J---prototype/raw/main/webapp/docs/media/demo.mp4
+![Project overview preview](webapp/docs/media/demo-preview.gif)
 
-GitHub plays this inline once the repository is public, or you can [download it directly](webapp/docs/media/demo.mp4).
+The GIF above is a short excerpt (GitHub does not auto-play an `.mp4` committed directly to the repo, only files uploaded through its own drag-and-drop attachment flow). Watch the full two-minute video: [webapp/docs/media/demo.mp4](webapp/docs/media/demo.mp4) (download, 2.1 MB).
 
 ## Overview
 
